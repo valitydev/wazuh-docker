@@ -10,7 +10,7 @@ source /data_dirs.env
 FIRST_TIME_INSTALLATION=false
 
 WAZUH_INSTALL_PATH=/var/ossec
-DATA_PATH=${WAZUH_INSTALL_PATH}/data
+DATA_PATH=${WAZUH_INSTALL_PATH}
 
 WAZUH_CONFIG_MOUNT=/wazuh-config-mount
 
@@ -36,30 +36,29 @@ edit_configuration() { # $1 -> setting,  $2 -> value
     sed -i "s/^config.$1\s=.*/config.$1 = \"$2\";/g" "${DATA_PATH}/api/configuration/config.js" || error_and_exit "sed (editing configuration)"
 }
 
-for ossecdir in "${DATA_DIRS[@]}"; do
-  if [ ! -e "${DATA_PATH}/${ossecdir}" ]
-  then
-    print "Installing ${ossecdir}"
-    exec_cmd "mkdir -p $(dirname ${DATA_PATH}/${ossecdir})"
-    exec_cmd "cp -pr /var/ossec/${ossecdir}-template ${DATA_PATH}/${ossecdir}"
-    FIRST_TIME_INSTALLATION=true
-  fi
-done
+# for ossecdir in "${DATA_DIRS[@]}"; do
+#   if [ ! -e "${DATA_PATH}/${ossecdir}" ]
+#   then
+#     print "Installing ${ossecdir}"
+#     exec_cmd "mkdir -p $(dirname ${DATA_PATH}/${ossecdir})"
+#     exec_cmd "cp -pr /var/ossec/${ossecdir}-template ${DATA_PATH}/${ossecdir}"
+#     FIRST_TIME_INSTALLATION=true
+#   fi
+# done
 
-if [  -e ${WAZUH_INSTALL_PATH}/etc-template  ]
-then
-    cp -p /var/ossec/etc-template/internal_options.conf /var/ossec/etc/internal_options.conf
-fi
-rm /var/ossec/queue/db/.template.db
+# if [  -e ${WAZUH_INSTALL_PATH}/etc-template  ]
+# then
+#     cp -p /var/ossec/etc-template/internal_options.conf /var/ossec/etc/internal_options.conf
+# fi
 
 # copy missing files from queue-template (in case this is an upgrade from previous versions)
-for filename in /var/ossec/queue-template/*; do
-  fname=$(basename $filename)
-  echo $fname
-  if test ! -e "/var/ossec/data/queue/$fname"; then
-    cp -rp "/var/ossec/queue-template/$fname" /var/ossec/data/queue/
-  fi
-done
+# for filename in /var/ossec/queue-template/*; do
+#   fname=$(basename $filename)
+#   echo $fname
+#   if test ! -e "/var/ossec/data/queue/$fname"; then
+#     cp -rp "/var/ossec/queue-template/$fname" /var/ossec/data/queue/
+#   fi
+# done
 
 touch ${DATA_PATH}/process_list
 chgrp ossec ${DATA_PATH}/process_list
@@ -100,14 +99,14 @@ fi
 # $WAZUH_CONFIG_MOUNT/etc/ossec.conf in your container and this code will
 # replace the ossec.conf file in /var/ossec/data/etc with yours.
 ##############################################################################
-if [ -e "$WAZUH_CONFIG_MOUNT" ]
-then
-  print "Identified Wazuh configuration files to mount..."
+# if [ -e "$WAZUH_CONFIG_MOUNT" ]
+# then
+#   print "Identified Wazuh configuration files to mount..."
 
-  exec_cmd_stdout "cp --verbose -r $WAZUH_CONFIG_MOUNT/* $DATA_PATH"
-else
-  print "No Wazuh configuration files to mount..."
-fi
+#   exec_cmd_stdout "cp --verbose -r $WAZUH_CONFIG_MOUNT/* $DATA_PATH"
+# else
+#   print "No Wazuh configuration files to mount..."
+# fi
 
 function ossec_shutdown(){
   ${WAZUH_INSTALL_PATH}/bin/ossec-control stop;
@@ -145,6 +144,13 @@ done
 ##############################################################################
 # Change Wazuh API user credentials.
 ##############################################################################
+
+if [ -n "$AGENT_REG_PASS" ]; then
+  echo "$AGENT_REG_PASS" > ${WAZUH_INSTALL_PATH}/etc/authd.pass
+fi
+
+mkdir -p ${WAZUH_INSTALL_PATH}/logs/{archives,alerts,firewall,ossec,cluster,api}
+chown -R ossec:ossec ${WAZUH_INSTALL_PATH}/logs/
 
 pushd /var/ossec/api/configuration/auth/
 

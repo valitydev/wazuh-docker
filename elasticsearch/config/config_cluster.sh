@@ -27,8 +27,6 @@ cat > $elastic_config_file << EOF
 network.host: 0.0.0.0
 node.name: $CLUSTER_MASTER_NODE_NAME
 node.master: $CLUSTER_NODE_MASTER
-cluster.initial_master_nodes:
-  - $CLUSTER_MASTER_NODE_NAME
 # end cluster config"
 EOF
 

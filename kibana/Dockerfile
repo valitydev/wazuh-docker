@@ -1,12 +1,29 @@
 # Wazuh Docker Copyright (C) 2020 Wazuh Inc. (License GPLv2)
-FROM docker.elastic.co/kibana/kibana:7.6.2
+
+FROM centos:7 as plugin_builder
+
+ARG KIBANA_PLUGIN_VERSION="v3.12.3-6.8.1"
+
+RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
+    curl -sL https://rpm.nodesource.com/setup_8.x | bash - && \
+    yum install git nodejs -y && \
+    npm install -g n
+
+ADD ./config/build.sh /
+RUN chmod +x /build.sh && \
+    mkdir /wazuh_app /source && \
+    /build.sh ${KIBANA_PLUGIN_VERSION}
+
+FROM docker.elastic.co/kibana/kibana-oss:6.8.1
 USER kibana
-ARG ELASTIC_VERSION=7.6.2
+ARG ELASTIC_VERSION=6.8.1
 ARG WAZUH_VERSION=3.12.3
 ARG WAZUH_APP_VERSION="${WAZUH_VERSION}_${ELASTIC_VERSION}"
 
+COPY --from=plugin_builder /wazuh_app/wazuh_kibana-*.zip /tmp/wazuh_kibana.zip
+
 WORKDIR /usr/share/kibana
-RUN ./bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp-${WAZUH_APP_VERSION}.zip
+RUN ./bin/kibana-plugin install file:///tmp/wazuh_kibana.zip
 
 WORKDIR /
 USER root

@@ -7,51 +7,58 @@ set -e
 # Waiting for elasticsearch
 ##############################################################################
 
-if [ "x${ELASTICSEARCH_URL}" = "x" ]; then
-  el_url="http://elasticsearch:9200"
+if [ "${WAZUH_SKIP_TESTS}" = "true" ]; then
+  ./wazuh_app_config.sh
+  ./kibana_settings.sh &
+  /usr/local/bin/kibana-docker
 else
-  el_url="${ELASTICSEARCH_URL}"
-fi
+  if [ "x${ELASTICSEARCH_URL}" = "x" ]; then
+    el_url="http://elasticsearch:9200"
+  else
+    el_url="${ELASTICSEARCH_URL}"
+  fi
 
-if [[ ${ENABLED_XPACK} != "true" || "x${ELASTICSEARCH_USERNAME}" = "x" || "x${ELASTICSEARCH_PASSWORD}" = "x" ]]; then
-  auth=""
-else
-  auth="--user ${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}"
-fi
-
-until curl -XGET $el_url ${auth}; do
-  >&2 echo "Elastic is unavailable - sleeping"
-  sleep 5
-done
-
-sleep 2
-
->&2 echo "Elasticsearch is up."
+  if [[ ${ENABLED_XPACK} != "true" || "x${ELASTICSEARCH_USERNAME}" = "x" || "x${ELASTICSEARCH_PASSWORD}" = "x" ]]; then
+    auth=""
+  else
+    auth="--user ${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD}"
+  fi
 
 
-##############################################################################
-# Waiting for wazuh alerts template
-##############################################################################
+  until curl -XGET $el_url ${auth}; do
+    >&2 echo "Elastic is unavailable - sleeping"
+    sleep 5
+  done
 
-strlen=0
-
-while [[ $strlen -eq 0 ]]
-do
-  template=$(curl $el_url/_cat/templates/wazuh -s)
-  strlen=${#template}
-  >&2 echo "Wazuh alerts template not loaded - sleeping."
   sleep 2
-done
 
-sleep 2
-
->&2 echo "Wazuh alerts template is loaded."
+  >&2 echo "Elasticsearch is up."
 
 
-./wazuh_app_config.sh
+  ##############################################################################
+  # Waiting for wazuh alerts template
+  ##############################################################################
 
-sleep 5
+  strlen=0
 
-./kibana_settings.sh &
+  while [[ $strlen -eq 0 ]]
+  do
+    template=$(curl $el_url/_cat/templates/wazuh -s)
+    strlen=${#template}
+    >&2 echo "Wazuh alerts template not loaded - sleeping."
+    sleep 2
+  done
 
-/usr/local/bin/kibana-docker
+  sleep 2
+
+  >&2 echo "Wazuh alerts template is loaded."
+
+
+  ./wazuh_app_config.sh
+
+  sleep 5
+
+  ./kibana_settings.sh &
+
+  /usr/local/bin/kibana-docker
+fi

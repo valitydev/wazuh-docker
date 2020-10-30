@@ -1,4 +1,13 @@
 #!/bin/sh
 # Wazuh Docker Copyright (C) 2020 Wazuh Inc. (License GPLv2)
+OSSEC_PREFIX=/var/ossec
+
 service wazuh-manager start
-tail -f /var/ossec/data/logs/ossec.log
+
+REMOTED_PID="$(pidof ossec-remoted)"
+
+if [ -n "$REMOTED_PID" ]; then
+  tail --pid=$REMOTED_PID -f ${OSSEC_PREFIX}/logs/ossec.log 2>/dev/null || tail --pid=$REMOTED_PID -f ${OSSEC_PREFIX}/logs/ossec.json
+else
+  echo "No ossec-remoted pid found"
+fi

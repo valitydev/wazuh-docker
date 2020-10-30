@@ -6,6 +6,7 @@ source /data_dirs.env
 
 cd /var/ossec
 for ossecdir in "${DATA_DIRS[@]}"; do
-  mv ${ossecdir} ${ossecdir}-template
+  mkdir -p "data/${ossecdir}"
+  mv ${ossecdir} data/${ossecdir}
   ln -s $(realpath --relative-to=$(dirname ${ossecdir}) data)/${ossecdir} ${ossecdir}
 done
