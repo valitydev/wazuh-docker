@@ -1,5 +1,6 @@
+#!/bin/bash
 # Wazuh Docker Copyright (C) 2020 Wazuh Inc. (License GPLv2)
-
+cat <<EOF
 FROM centos:7 as plugin_builder
 
 ARG KIBANA_PLUGIN_VERSION="v3.12.3-6.8.1"
@@ -12,13 +13,13 @@ RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 && \
 ADD ./config/build.sh /
 RUN chmod +x /build.sh && \
     mkdir /wazuh_app /source && \
-    /build.sh ${KIBANA_PLUGIN_VERSION}
+    /build.sh \${KIBANA_PLUGIN_VERSION}
 
 FROM docker.elastic.co/kibana/kibana-oss:6.8.1
 USER kibana
 ARG ELASTIC_VERSION=6.8.1
 ARG WAZUH_VERSION=3.12.3
-ARG WAZUH_APP_VERSION="${WAZUH_VERSION}_${ELASTIC_VERSION}"
+ARG WAZUH_APP_VERSION="\${WAZUH_VERSION}_\${ELASTIC_VERSION}"
 
 COPY --from=plugin_builder /wazuh_app/wazuh_kibana-*.zip /tmp/wazuh_kibana.zip
 
@@ -90,3 +91,4 @@ USER kibana
 RUN NODE_OPTIONS="--max-old-space-size=2048" /usr/local/bin/kibana-docker --optimize
 
 ENTRYPOINT ./entrypoint.sh
+EOF

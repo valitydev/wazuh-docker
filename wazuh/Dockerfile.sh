@@ -1,4 +1,6 @@
+#!/bin/bash
 # Wazuh Docker Copyright (C) 2020 Wazuh Inc. (License GPLv2)
+cat <<EOF
 FROM phusion/baseimage:bionic-1.0.0
 
 ARG FILEBEAT_VERSION=6.8.1
@@ -21,8 +23,8 @@ RUN apt update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
 
 RUN add-apt-repository universe && apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     apt-get --no-install-recommends --no-install-suggests -y install openssl python-boto python-pip  \
-    apt-transport-https vim expect nodejs python-cryptography libsasl2-modules wazuh-manager=${WAZUH_VERSION} \
-    wazuh-api=${WAZUH_VERSION} && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm -f \
+    apt-transport-https vim expect nodejs python-cryptography libsasl2-modules wazuh-manager=\${WAZUH_VERSION} \
+    wazuh-api=\${WAZUH_VERSION} && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm -f \
     /var/ossec/logs/alerts/*/*/*.log && rm -f /var/ossec/logs/alerts/*/*/*.json && rm -f \
     /var/ossec/logs/archives/*/*/*.log && rm -f /var/ossec/logs/archives/*/*/*.json && rm -f \
     /var/ossec/logs/firewall/*/*/*.log && rm -f /var/ossec/logs/firewall/*/*/*.json
@@ -30,13 +32,13 @@ RUN add-apt-repository universe && apt-get update && apt-get upgrade -y -o Dpkg:
 # Install Wazuh Filebeat Module
 
 RUN mkdir -p /usr/share/filebeat/module/wazuh && \
-    curl -s "https://packages.wazuh.com/3.x/filebeat/${WAZUH_FILEBEAT_MODULE}" | tar -xvz -C /usr/share/filebeat/module && \
+    curl -s "https://packages.wazuh.com/3.x/filebeat/\${WAZUH_FILEBEAT_MODULE}" | tar -xvz -C /usr/share/filebeat/module && \
     chmod 755 -R /usr/share/filebeat/module/wazuh
 
-RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-oss-${FILEBEAT_VERSION}-amd64.deb && \
-    dpkg -i filebeat-oss-${FILEBEAT_VERSION}-amd64.deb && rm -f filebeat-oss-${FILEBEAT_VERSION}-amd64.deb
+RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-oss-\${FILEBEAT_VERSION}-amd64.deb && \
+    dpkg -i filebeat-oss-\${FILEBEAT_VERSION}-amd64.deb && rm -f filebeat-oss-\${FILEBEAT_VERSION}-amd64.deb
 
-RUN curl -sL https://raw.githubusercontent.com/wazuh/wazuh/$TEMPLATE_VERSION/extensions/elasticsearch/6.x/wazuh-template.json -o /etc/filebeat/wazuh-template.json && \
+RUN curl -sL https://raw.githubusercontent.com/wazuh/wazuh/\$TEMPLATE_VERSION/extensions/elasticsearch/6.x/wazuh-template.json -o /etc/filebeat/wazuh-template.json && \
     sed -i 's@"wazuh":@"doc":@' /etc/filebeat/wazuh-template.json && \
     chmod go-w /etc/filebeat/wazuh-template.json
 
@@ -80,3 +82,4 @@ RUN chmod +x /etc/service/wazuh-api/run /etc/service/wazuh/run \
 
 # Run all services
 ENTRYPOINT ["/entrypoint.sh"]
+EOF
