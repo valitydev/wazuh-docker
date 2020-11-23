@@ -5,6 +5,7 @@ FROM phusion/baseimage:bionic-1.0.0
 
 ARG FILEBEAT_VERSION=6.8.1
 ARG WAZUH_VERSION=3.12.3-1
+ARG HIVE4PY_VERSION=1.6.0
 
 ENV WAZUH_FILEBEAT_MODULE=wazuh-filebeat-0.1.tar.gz
 
@@ -22,7 +23,7 @@ RUN apt update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
     groupadd -g 1000 ossec && useradd -u 1000 -g 1000 -d /var/ossec ossec
 
 RUN add-apt-repository universe && apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
-    apt-get --no-install-recommends --no-install-suggests -y install openssl python-boto python-pip  \
+    apt-get --no-install-recommends --no-install-suggests -y install openssl python-boto python-pip python-setuptools \
     apt-transport-https vim expect nodejs python-cryptography libsasl2-modules wazuh-manager=\${WAZUH_VERSION} \
     wazuh-api=\${WAZUH_VERSION} && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && rm -f \
     /var/ossec/logs/alerts/*/*/*.log && rm -f /var/ossec/logs/alerts/*/*/*.json && rm -f \
@@ -79,6 +80,11 @@ COPY config/office365.py /var/ossec/bin/office365.py
 
 RUN chmod +x /etc/service/wazuh-api/run /etc/service/wazuh/run \
              /etc/service/filebeat/run /var/ossec/bin/office365.py
+
+COPY --chown=root:ossec config/integrations/* /var/ossec/integrations/
+
+RUN chmod 755 /var/ossec/integrations/* && \
+    pip install thehive4py==\${HIVE4PY_VERSION}
 
 # Run all services
 ENTRYPOINT ["/entrypoint.sh"]
