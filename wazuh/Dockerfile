@@ -36,9 +36,9 @@ RUN mkdir -p /usr/share/filebeat/module/wazuh && \
 RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-oss-${FILEBEAT_VERSION}-amd64.deb && \
     dpkg -i filebeat-oss-${FILEBEAT_VERSION}-amd64.deb && rm -f filebeat-oss-${FILEBEAT_VERSION}-amd64.deb
 
-RUN curl -sL https://raw.githubusercontent.com/wazuh/wazuh/$TEMPLATE_VERSION/extensions/elasticsearch/6.x/wazuh-template.json -o /etc/filebeat/wazuh-template.json && \
-    sed -i 's@"wazuh":@"doc":@' /etc/filebeat/wazuh-template.json && \
-    chmod go-w /etc/filebeat/wazuh-template.json
+COPY config/wazuh-template.json /etc/filebeat/
+
+RUN chmod go-w /etc/filebeat/wazuh-template.json
 
 # Adding first run script and entrypoint
 COPY config/data_dirs.env /data_dirs.env
