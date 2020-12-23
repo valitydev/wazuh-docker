@@ -76,10 +76,10 @@ RUN mkdir -p /etc/service/wazuh && \
 COPY config/wazuh.runit.service /etc/service/wazuh/run
 COPY config/wazuh-api.runit.service /etc/service/wazuh-api/run
 COPY config/filebeat.runit.service /etc/service/filebeat/run
-COPY config/office365.py /var/ossec/bin/office365.py
+COPY config/apps/* /var/ossec/bin/
 
 RUN chmod +x /etc/service/wazuh-api/run /etc/service/wazuh/run \
-             /etc/service/filebeat/run /var/ossec/bin/office365.py
+             /etc/service/filebeat/run /var/ossec/bin/*
 
 COPY --chown=root:ossec config/integrations/* /var/ossec/integrations/
 
